@@ -1,0 +1,114 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../providers/data_provider.dart';
+import '../core/app_theme.dart';
+
+class ProductDetailScreen extends StatefulWidget {
+  final Product product;
+  const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _stockController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.product.name);
+    _priceController = TextEditingController(text: widget.product.price.toString());
+    _stockController = TextEditingController(text: widget.product.stockCount.toString());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = context.read<DataProvider>();
+    
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Product Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            onPressed: () {
+              data.deleteProduct(widget.product.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product deleted')));
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppTheme.bgGrey,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey),
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text('Edit Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            const Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 8),
+            TextField(controller: _nameController),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       const Text('Price (PKR)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                       const SizedBox(height: 8),
+                       TextField(controller: _priceController, keyboardType: TextInputType.number),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       const Text('Stock Count', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                       const SizedBox(height: 8),
+                       TextField(controller: _stockController, keyboardType: TextInputType.number),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+            ElevatedButton(
+              onPressed: () {
+                data.updateProduct(
+                  widget.product.id,
+                  _nameController.text,
+                  double.parse(_priceController.text),
+                  int.parse(_stockController.text),
+                );
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product updated')));
+              },
+              child: const Text('Update Product'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
