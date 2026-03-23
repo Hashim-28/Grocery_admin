@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
+import 'dart:io';
 import '../providers/data_provider.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -14,7 +16,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _nameController = TextEditingController();
   final _skuController = TextEditingController();
   final _priceController = TextEditingController();
+  final _categoryController = TextEditingController(text: 'Groceries');
   String _selectedCategory = 'Groceries';
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +68,36 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
                   const Text('Category', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    decoration: const InputDecoration(hintText: 'Select category'),
-                    items: ['Groceries', 'Electronics', 'Apparel']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedCategory = v!),
-                    icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textDark),
+                  Autocomplete<String>(
+                    initialValue: TextEditingValue(text: _selectedCategory),
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      const options = ['Groceries', 'Electronics', 'Apparel', 'Personal Care', 'Home Essentials', 'Beverages'];
+                      if (textEditingValue.text == '') {
+                        return const Iterable<String>.empty();
+                      }
+                      return options.where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      setState(() {
+                        _selectedCategory = selection;
+                      });
+                    },
+                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                      // Sync external controller if needed
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        onChanged: (value) {
+                          _selectedCategory = value;
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Type or select category',
+                          suffixIcon: Icon(Icons.keyboard_arrow_down, color: AppTheme.textDark),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -115,6 +151,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           _selectedCategory,
                           double.tryParse(_priceController.text) ?? 0.0,
                           _skuController.text,
+                          imagePath: _selectedImage?.path,
                         );
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,21 +176,46 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _buildUploadBox() {
-    return Container(
-      width: double.infinity,
-      height: 150,
-      decoration: BoxDecoration(
-        color: AppTheme.bgGrey,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderGrey),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.cloud_upload_outlined, size: 40, color: AppTheme.textGrey.withOpacity(0.5)),
-          const SizedBox(height: 12),
-          const Text('Upload Images', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-        ],
+    return InkWell(
+      onTap: _pickImage,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        height: 150,
+        decoration: BoxDecoration(
+          color: AppTheme.bgGrey,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderGrey),
+          image: _selectedImage != null
+              ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
+              : null,
+        ),
+        child: _selectedImage == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_upload_outlined, size: 40, color: AppTheme.textGrey.withOpacity(0.5)),
+                  const SizedBox(height: 12),
+                  const Text('Upload Images', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                ],
+              )
+            : Stack(
+                children: [
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black54,
+                      radius: 12,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, size: 10, color: Colors.white),
+                        onPressed: () => setState(() => _selectedImage = null),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

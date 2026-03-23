@@ -128,69 +128,113 @@ class _OrdersList extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.borderGrey),
           ),
-          child: InkWell(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppTheme.primaryGreen.withOpacity(0.05),
-                    radius: 24,
-                    child: const Icon(Icons.person, color: AppTheme.primaryGreen),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(order.customerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 4),
-                        Text('Order ID: #${order.id}', style: const TextStyle(color: AppTheme.textGrey, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        Text(currencyFormat.format(order.amount), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
-                      ],
-                    ),
-                  ),
-                  if (status == OrderStatus.pending && isAdmin)
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            data.cancelOrder(order.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Order #${order.id} cancelled')),
-                            );
-                          },
-                          style: IconButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.all(8),
-                            side: const BorderSide(color: Colors.red, width: 1),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          icon: const Icon(Icons.delete_outline, size: 20),
+          child: Stack(
+            children: [
+              InkWell(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order))),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 24, 16), // Extra right padding
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: AppTheme.primaryGreen.withOpacity(0.05),
+                        radius: 24,
+                        child: const Icon(Icons.person, color: AppTheme.primaryGreen),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              order.customerName,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Order ID: #${order.id}',
+                              style: const TextStyle(color: AppTheme.textGrey, fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              currencyFormat.format(order.amount),
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            data.dispatchOrder(order.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Order #${order.id} dispatched')),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            minimumSize: const Size(80, 40),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      if (status == OrderStatus.pending)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              data.dispatchOrder(order.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Order #${order.id} dispatched')),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              minimumSize: const Size(80, 40),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('DISPATCH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                           ),
-                          child: const Text('DISPATCH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                         ),
-                      ],
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (status == OrderStatus.pending && isAdmin)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Cancel Order'),
+                          content: const Text('Do you really want to cancel this order?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('No'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                data.cancelOrder(order.id);
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Order #${order.id} cancelled')),
+                                );
+                              },
+                              child: const Text('Yes', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.red, width: 1),
+                      ),
+                      child: const Icon(Icons.close, size: 12, color: Colors.red),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },

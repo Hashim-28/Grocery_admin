@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 import '../providers/data_provider.dart';
+import '../providers/auth_provider.dart';
 import '../core/app_theme.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -28,20 +30,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final data = context.read<DataProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isAdmin = auth.role == UserRole.admin;
     
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Product Details'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: () {
-              data.deleteProduct(widget.product.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product deleted')));
-            },
-          ),
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () {
+                data.deleteProduct(widget.product.id);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product deleted')));
+              },
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -56,16 +61,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.bgGrey,
                   borderRadius: BorderRadius.circular(24),
+                  image: widget.product.imagePath != null
+                      ? DecorationImage(
+                          image: FileImage(File(widget.product.imagePath!)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey),
+                child: widget.product.imagePath == null
+                    ? const Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey)
+                    : null,
               ),
             ),
             const SizedBox(height: 32),
-            const Text('Edit Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(isAdmin ? 'Edit Information' : 'Product Information', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             const Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 8),
-            TextField(controller: _nameController),
+            TextField(controller: _nameController, readOnly: !isAdmin),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -75,7 +88,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     children: [
                        const Text('Price (PKR)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                        const SizedBox(height: 8),
-                       TextField(controller: _priceController, keyboardType: TextInputType.number),
+                       TextField(controller: _priceController, keyboardType: TextInputType.number, readOnly: !isAdmin),
                     ],
                   ),
                 ),
@@ -86,26 +99,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     children: [
                        const Text('Stock Count', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                        const SizedBox(height: 8),
-                       TextField(controller: _stockController, keyboardType: TextInputType.number),
+                       TextField(controller: _stockController, keyboardType: TextInputType.number, readOnly: !isAdmin),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: () {
-                data.updateProduct(
-                  widget.product.id,
-                  _nameController.text,
-                  double.parse(_priceController.text),
-                  int.parse(_stockController.text),
-                );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product updated')));
-              },
-              child: const Text('Update Product'),
-            ),
+            if (isAdmin) ...[
+              const SizedBox(height: 48),
+              ElevatedButton(
+                onPressed: () {
+                  data.updateProduct(
+                    widget.product.id,
+                    _nameController.text,
+                    double.parse(_priceController.text),
+                    int.parse(_stockController.text),
+                  );
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product updated')));
+                },
+                child: const Text('Update Product'),
+              ),
+            ],
           ],
         ),
       ),

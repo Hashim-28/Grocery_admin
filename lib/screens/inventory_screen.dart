@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 import '../providers/data_provider.dart';
 import '../providers/auth_provider.dart';
 import '../core/app_theme.dart';
@@ -148,8 +149,16 @@ class _ProductCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppTheme.bgGrey,
               borderRadius: BorderRadius.circular(12),
+              image: product.imagePath != null
+                  ? DecorationImage(
+                      image: FileImage(File(product.imagePath!)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+            child: product.imagePath == null
+                ? const Icon(Icons.inventory_2_outlined, color: Colors.grey)
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(

@@ -4,8 +4,15 @@ import 'package:fl_chart/fl_chart.dart';
 import '../core/app_theme.dart';
 import '../providers/data_provider.dart';
 
-class ReportsScreen extends StatelessWidget {
+class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
+
+  @override
+  State<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends State<ReportsScreen> {
+  String _selectedPeriod = 'Today';
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +35,30 @@ class ReportsScreen extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: const [
-                   _PeriodChip(label: 'Today', isSelected: true),
-                   SizedBox(width: 8),
-                   _PeriodChip(label: 'Weekly'),
-                   SizedBox(width: 8),
-                   _PeriodChip(label: 'Monthly'),
-                   SizedBox(width: 8),
-                   _PeriodChip(label: 'Yearly'),
+                children: [
+                   _PeriodChip(
+                     label: 'Today', 
+                     isSelected: _selectedPeriod == 'Today',
+                     onTap: () => setState(() => _selectedPeriod = 'Today'),
+                   ),
+                   const SizedBox(width: 8),
+                   _PeriodChip(
+                     label: 'Weekly', 
+                     isSelected: _selectedPeriod == 'Weekly',
+                     onTap: () => setState(() => _selectedPeriod = 'Weekly'),
+                   ),
+                   const SizedBox(width: 8),
+                   _PeriodChip(
+                     label: 'Monthly', 
+                     isSelected: _selectedPeriod == 'Monthly',
+                     onTap: () => setState(() => _selectedPeriod = 'Monthly'),
+                   ),
+                   const SizedBox(width: 8),
+                   _PeriodChip(
+                     label: 'Yearly', 
+                     isSelected: _selectedPeriod == 'Yearly',
+                     onTap: () => setState(() => _selectedPeriod = 'Yearly'),
+                   ),
                 ],
               ),
             ),
@@ -44,7 +67,7 @@ class ReportsScreen extends StatelessWidget {
             // Sales Chart
             _buildChartCard(
               title: 'Revenue Distribution',
-              subtitle: 'Total PKR 1.2M this month',
+              subtitle: 'Total PKR 1.2M this ${_selectedPeriod.toLowerCase().replaceAll('ly', '')}',
               chart: _buildPieChart(),
             ),
             const SizedBox(height: 16),
@@ -160,20 +183,25 @@ class ReportsScreen extends StatelessWidget {
 class _PeriodChip extends StatelessWidget {
   final String label;
   final bool isSelected;
-  const _PeriodChip({required this.label, this.isSelected = false});
+  final VoidCallback onTap;
+  const _PeriodChip({required this.label, required this.onTap, this.isSelected = false});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primaryGreen : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isSelected ? AppTheme.primaryGreen : AppTheme.borderGrey),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: isSelected ? Colors.white : AppTheme.textGrey, fontWeight: FontWeight.bold, fontSize: 12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryGreen : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? AppTheme.primaryGreen : AppTheme.borderGrey),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(color: isSelected ? Colors.white : AppTheme.textGrey, fontWeight: FontWeight.bold, fontSize: 12),
+        ),
       ),
     );
   }

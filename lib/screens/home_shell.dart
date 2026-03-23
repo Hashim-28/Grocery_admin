@@ -26,7 +26,7 @@ class _HomeShellState extends State<HomeShell> {
     final List<Map<String, dynamic>> tabs = [
       if (isAdmin) {'title': 'Home', 'icon': Icons.grid_view_rounded, 'screen': const DashboardScreen()},
       {'title': 'Orders', 'icon': Icons.receipt_long_rounded, 'screen': const OrdersScreen()},
-      if (isAdmin) {'title': 'Inventory', 'icon': Icons.inventory_2_rounded, 'screen': const InventoryScreen()},
+      {'title': 'Inventory', 'icon': Icons.inventory_2_rounded, 'screen': const InventoryScreen()},
       if (isAdmin) {'title': 'Reports', 'icon': Icons.bar_chart_rounded, 'screen': const ReportsScreen()},
       if (isAdmin) {'title': 'Admin', 'icon': Icons.settings_rounded, 'screen': const AdminConsoleScreen()},
       if (!isAdmin) {'title': 'Profile', 'icon': Icons.person_outline, 'screen': const AdminConsoleScreen()}, // Added for staff to fix crash

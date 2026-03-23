@@ -39,6 +39,7 @@ class Product {
   double price;
   int stockCount;
   StockStatus status;
+  String? imagePath;
 
   Product({
     required this.id,
@@ -48,6 +49,7 @@ class Product {
     required this.price,
     required this.stockCount,
     required this.status,
+    this.imagePath,
   });
 }
 
@@ -163,7 +165,7 @@ class DataProvider with ChangeNotifier {
     }
   }
 
-  void addProduct(String name, String category, double price, String sku) {
+  void addProduct(String name, String category, double price, String sku, {String? imagePath}) {
     _products.insert(0, Product(
       id: DateTime.now().toIso8601String(),
       name: name,
@@ -172,6 +174,7 @@ class DataProvider with ChangeNotifier {
       sku: sku,
       stockCount: 1,
       status: StockStatus.inStock,
+      imagePath: imagePath,
     ));
     notifyListeners();
   }
