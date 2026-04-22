@@ -26,18 +26,11 @@ class _AuthScreenState extends State<AuthScreen> {
     }
     if (_formKey.currentState!.validate()) {
       try {
-        if (_selectedRole == UserRole.admin) {
-          await context.read<AuthProvider>().login(
-                _selectedRole,
-                _idController.text,
-                _keyController.text,
-              );
-        } else {
-          await context.read<AuthProvider>().loginStaff(
-                _idController.text,
-                _keyController.text,
-              );
-        }
+        await context.read<AuthProvider>().login(
+              _selectedRole,
+              _idController.text,
+              _keyController.text,
+            );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

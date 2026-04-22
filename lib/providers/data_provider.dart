@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../constants/supabase_config.dart';
+import 'auth_provider.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import '../constants/cloudinary_config.dart';
 import '../services/notification_service.dart';
@@ -41,6 +43,7 @@ class Order {
   final String? orderNumber;
   final String customerName;
   final String address;
+  final String? customerPhone;
   final List<OrderItem> items;
   final double amount;
   final DateTime time;
@@ -61,6 +64,7 @@ class Order {
     this.orderNumber,
     required this.customerName,
     required this.address,
+    this.customerPhone,
     required this.items,
     required this.amount,
     required this.time,
@@ -125,6 +129,7 @@ class Order {
       orderNumber: json['order_number']?.toString(),
       customerName: json['customer_name']?.toString() ?? 'Guest',
       address: json['address']?.toString() ?? 'No address',
+      customerPhone: json['customer_phone']?.toString(),
       items: items,
       amount: (json['amount'] ?? 0).toDouble(),
       time: parseDate(json['time']),
@@ -826,14 +831,33 @@ class DataProvider with ChangeNotifier {
 
   Future<void> addStaff(
     String name,
-    String username,
+    String email,
     String password,
     String role,
   ) async {
     try {
+      // 1. Register the user in Supabase Auth using a temporary client 
+      // to avoid logging out the current admin.
+      final tempSupabase = SupabaseClient(SupabaseConfig.url, SupabaseConfig.anonKey);
+      
+      final authResponse = await tempSupabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': name,
+          'role': role.toLowerCase().contains('admin') ? 'admin' : 'staff',
+        },
+      );
+
+      if (authResponse.user == null) {
+        throw 'Failed to create authenticated user';
+      }
+
+      // 2. Add to staff_members table for management UI
       final newStaff = {
+        'id': authResponse.user!.id,
         'name': name,
-        'username': username,
+        'username': email,
         'password': password,
         'role': role,
         'status': 'Active',

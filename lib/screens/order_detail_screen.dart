@@ -112,39 +112,127 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             _buildActionButtons(context, currentOrder),
             const SizedBox(height: 32),
 
-            const Text(
-              'CUSTOMER INFO',
-              style: TextStyle(
-                color: AppTheme.textGrey,
-                fontSize: 12,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.bold,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.bgGrey.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.borderGrey),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              currentOrder.customerName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: AppTheme.primaryGreen,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    currentOrder.address,
-                    style: const TextStyle(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CUSTOMER INFO',
+                    style: TextStyle(
                       color: AppTheme.textGrey,
-                      fontSize: 14,
+                      fontSize: 11,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                        radius: 20,
+                        child: const Icon(Icons.person_outline, color: AppTheme.primaryGreen, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          currentOrder.customerName,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 32),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                        color: AppTheme.primaryGreen,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Delivery Address',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textGrey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              currentOrder.address,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                height: 1.4,
+                              ),
+                            ),
+                            if (currentOrder.customerPhone != null) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Mobile Number',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textGrey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          currentOrder.customerPhone!,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 40,
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryGreen.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        // Action for calling
+                                      },
+                                      icon: const Icon(Icons.phone, color: AppTheme.primaryGreen, size: 20),
+                                      tooltip: 'Call Customer',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 

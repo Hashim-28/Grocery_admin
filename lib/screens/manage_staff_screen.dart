@@ -9,7 +9,7 @@ class ManageStaffScreen extends StatelessWidget {
   void _showStaffForm(BuildContext context, {Staff? staff}) {
     final data = context.read<DataProvider>();
     final nameController = TextEditingController(text: staff?.name ?? '');
-    final usernameController = TextEditingController(text: staff?.username ?? '');
+    final emailController = TextEditingController(text: staff?.username ?? '');
     final passwordController = TextEditingController(text: staff?.password ?? '');
     String selectedRole = staff?.role ?? 'Staff Member';
     String selectedStatus = staff?.status ?? 'Active';
@@ -50,9 +50,9 @@ class ManageStaffScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     TextField(controller: nameController, decoration: const InputDecoration(hintText: 'e.g. Zaid Ahmed')),
                     const SizedBox(height: 20),
-                    const Text('Username', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Text('Email Address', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 8),
-                    TextField(controller: usernameController, decoration: const InputDecoration(hintText: 'login username')),
+                    TextField(controller: emailController, decoration: const InputDecoration(hintText: 'e.g. staff@example.com')),
                     const SizedBox(height: 20),
                     const Text('Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 8),
@@ -87,12 +87,12 @@ class ManageStaffScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () async {
-                        if (nameController.text.isNotEmpty && usernameController.text.isNotEmpty && passwordController.text.isNotEmpty) {
+                        if (nameController.text.isNotEmpty && emailController.text.isNotEmpty && passwordController.text.isNotEmpty) {
                           try {
                             if (staff == null) {
-                              await data.addStaff(nameController.text, usernameController.text, passwordController.text, selectedRole);
+                              await data.addStaff(nameController.text, emailController.text, passwordController.text, selectedRole);
                             } else {
-                              await data.updateStaff(staff.id, nameController.text, usernameController.text, passwordController.text, selectedRole, selectedStatus);
+                              await data.updateStaff(staff.id, nameController.text, emailController.text, passwordController.text, selectedRole, selectedStatus);
                             }
                             if (context.mounted) {
                               Navigator.pop(context);

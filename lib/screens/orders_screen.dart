@@ -88,19 +88,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ),
         body: Column(
           children: [
-            if (!isAdmin)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: Colors.orange.withOpacity(0.1),
-                child: Row(
-                  children: const [
-                    Icon(Icons.lock_person_outlined, size: 14, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('Staff View: Restricted Access', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
             Expanded(
               child: TabBarView(
                 children: [
@@ -279,6 +266,20 @@ class _OrdersListState extends State<_OrdersList> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              if (order.customerPhone != null) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.phone, size: 12, color: AppTheme.textGrey),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      order.customerPhone!,
+                                      style: const TextStyle(
+                                          color: AppTheme.textGrey, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 4),
                               Text(
                                 currencyFormat.format(order.amount),
