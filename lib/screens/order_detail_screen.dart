@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/data_provider.dart';
 import '../core/app_theme.dart';
 
@@ -14,6 +15,30 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _isUpdating = false;
+  
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber.replaceAll(RegExp(r'\s+'), ''),
+    );
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,12 +222,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
-                                        Text(
-                                          currentOrder.customerPhone!,
-                                          style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
+                                        InkWell(
+                                          onTap: () => _makePhoneCall(currentOrder.customerPhone!),
+                                          child: Text(
+                                            currentOrder.customerPhone!,
+                                            style: const TextStyle(
+                                              color: AppTheme.primaryGreen,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              decoration: TextDecoration.underline,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -216,9 +245,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: IconButton(
-                                      onPressed: () {
-                                        // Action for calling
-                                      },
+                                      onPressed: () => _makePhoneCall(currentOrder.customerPhone!),
                                       icon: const Icon(Icons.phone, color: AppTheme.primaryGreen, size: 20),
                                       tooltip: 'Call Customer',
                                     ),

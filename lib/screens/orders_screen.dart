@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/data_provider.dart';
 import '../providers/auth_provider.dart';
@@ -124,6 +125,30 @@ class _OrdersList extends StatefulWidget {
 
 class _OrdersListState extends State<_OrdersList> {
   final Set<String> _updatingOrderIds = {};
+  
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber.replaceAll(RegExp(r'\s+'), ''),
+    );
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch phone dialer')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,17 +293,23 @@ class _OrdersListState extends State<_OrdersList> {
                               ),
                               if (order.customerPhone != null) ...[
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.phone, size: 12, color: AppTheme.textGrey),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      order.customerPhone!,
-                                      style: const TextStyle(
-                                          color: AppTheme.textGrey, fontSize: 12),
+                                  InkWell(
+                                    onTap: () => _makePhoneCall(order.customerPhone!),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.phone, size: 12, color: AppTheme.primaryGreen),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          order.customerPhone!,
+                                          style: const TextStyle(
+                                              color: AppTheme.primaryGreen, 
+                                              fontSize: 12,
+                                              decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
                               ],
                               const SizedBox(height: 4),
                               Text(

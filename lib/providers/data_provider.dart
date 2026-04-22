@@ -838,24 +838,37 @@ class DataProvider with ChangeNotifier {
     try {
       // 1. Register the user in Supabase Auth using a temporary client 
       // to avoid logging out the current admin.
-      final tempSupabase = SupabaseClient(SupabaseConfig.url, SupabaseConfig.anonKey);
+      String? userId;
       
-      final authResponse = await tempSupabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'full_name': name,
-          'role': role.toLowerCase().contains('admin') ? 'admin' : 'staff',
-        },
-      );
-
-      if (authResponse.user == null) {
-        throw 'Failed to create authenticated user';
+      // 1. Attempt to register the user in Supabase Auth (Optional step)
+      // We do this so Admins can have real Auth accounts, but we don't let it block
+      // the creation of Staff Members if it fails.
+      try {
+        final tempSupabase = SupabaseClient(
+          SupabaseConfig.url, 
+          SupabaseConfig.anonKey,
+          authOptions: const AuthClientOptions(
+            authFlowType: AuthFlowType.implicit,
+          ),
+        );
+        
+        final authResponse = await tempSupabase.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'full_name': name,
+            'role': role.toLowerCase().contains('admin') ? 'admin' : 'staff',
+          },
+        );
+        userId = authResponse.user?.id;
+      } catch (e) {
+        debugPrint('Auth registration skipped or failed (User might already exist): $e');
+        // We continue anyway because loginStaff uses the staff_members table directly.
       }
 
       // 2. Add to staff_members table for management UI
       final newStaff = {
-        'id': authResponse.user!.id,
+        if (userId != null) 'id': userId,
         'name': name,
         'username': email,
         'password': password,
@@ -863,7 +876,7 @@ class DataProvider with ChangeNotifier {
         'status': 'Active',
       };
 
-      await _supabase.from('staff_members').insert(newStaff);
+      await _supabase.from('staff_members').upsert(newStaff, onConflict: 'username');
       await fetchStaff();
     } catch (e) {
       debugPrint('Error adding staff: $e');
