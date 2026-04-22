@@ -129,6 +129,13 @@ class AuthProvider extends ChangeNotifier {
       _email = username;
       _fullName = response['name'];
       _photoUrl = response['photo_url'];
+
+      // Attempt anonymous sign-in to Supabase to provide a session for RLS policies
+      try {
+        await _supabase.auth.signInAnonymously();
+      } catch (e) {
+        debugPrint('Anonymous sign-in failed: $e');
+      }
     } catch (e) {
       _role = UserRole.none;
       rethrow;

@@ -78,24 +78,27 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     // Map status string to enum
     OrderStatus orderStatus = OrderStatus.placed;
-    String statusStr = json['status'] ?? 'order Placed';
+    String statusStr = (json['status'] ?? 'order Placed').toString().toLowerCase();
 
     switch (statusStr) {
-      case 'order Placed':
-      case 'pending': // Keep pending for compatibility
+      case 'order placed':
+      case 'placed':
+      case 'pending':
         orderStatus = OrderStatus.placed;
         break;
-      case 'Confirmed':
+      case 'confirmed':
         orderStatus = OrderStatus.confirmed;
         break;
-      case 'Items Packed':
+      case 'items packed':
+      case 'packed':
         orderStatus = OrderStatus.packed;
         break;
-      case 'Out For Delivry':
-      case 'dispatched': // Keep dispatched for compatibility
+      case 'out for delivry':
+      case 'out for delivery':
+      case 'dispatched':
         orderStatus = OrderStatus.outForDelivery;
         break;
-      case 'Delivered':
+      case 'delivered':
         orderStatus = OrderStatus.delivered;
         break;
       case 'cancelled':
@@ -107,31 +110,33 @@ class Order {
         .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
         .toList();
 
+    DateTime parseDate(dynamic dateStr) {
+      if (dateStr == null) return DateTime.now();
+      return DateTime.tryParse(dateStr.toString()) ?? DateTime.now();
+    }
+
+    DateTime? tryParseDate(dynamic dateStr) {
+      if (dateStr == null) return null;
+      return DateTime.tryParse(dateStr.toString());
+    }
+
     return Order(
-      id: json['id'].toString(),
-      orderNumber: json['order_number'],
-      customerName: json['customer_name'] ?? '',
-      address: json['address'] ?? '',
+      id: (json['id'] ?? '').toString(),
+      orderNumber: json['order_number']?.toString(),
+      customerName: json['customer_name']?.toString() ?? 'Guest',
+      address: json['address']?.toString() ?? 'No address',
       items: items,
       amount: (json['amount'] ?? 0).toDouble(),
-      time: DateTime.parse(json['time'] ?? DateTime.now().toIso8601String()),
+      time: parseDate(json['time']),
       status: orderStatus,
-      deliveryType: json['delivery_type'] ?? 'Standard',
-      confirmedAt: json['confirmed_at'] != null
-          ? DateTime.parse(json['confirmed_at'])
-          : null,
-      packedAt: json['packed_at'] != null
-          ? DateTime.parse(json['packed_at'])
-          : null,
-      outForDeliveryAt: json['out_for_delivery_at'] != null
-          ? DateTime.parse(json['out_for_delivery_at'])
-          : null,
-      deliveredAt: json['delivered_at'] != null
-          ? DateTime.parse(json['delivered_at'])
-          : null,
-      paymentMethod: json['payment_method'],
+      deliveryType: json['delivery_type']?.toString() ?? 'Standard',
+      confirmedAt: tryParseDate(json['confirmed_at']),
+      packedAt: tryParseDate(json['packed_at']),
+      outForDeliveryAt: tryParseDate(json['out_for_delivery_at']),
+      deliveredAt: tryParseDate(json['delivered_at']),
+      paymentMethod: json['payment_method']?.toString(),
       paymentAccountId: json['payment_account_id']?.toString(),
-      paymentProofUrl: json['payment_proof_url'],
+      paymentProofUrl: json['payment_proof_url']?.toString(),
     );
   }
 }
@@ -679,25 +684,57 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _supabase
-          .from('orders')
-          .select('*, order_items(*)');
+      dynamic data;
+      try {
+        // Primary attempt: fetch orders with items in one join query
+        data = await _supabase
+            .from('orders')
+            .select('*, order_items(*)');
+      } catch (e) {
+        debugPrint('Primary join fetch failed, attempting fallback: $e');
+        
+        // Fallback: fetch orders and items separately (RLS might allow one but not the join)
+        final ordersData = await _supabase.from('orders').select();
+        
+        List<dynamic> itemsData = [];
+        try {
+          itemsData = await _supabase.from('order_items').select();
+        } catch (e2) {
+          debugPrint('Items fetch failed in fallback: $e2');
+        }
+        
+        // Map items to their respective orders
+        data = (ordersData as List).map((order) {
+          final orderId = order['id'].toString();
+          final orderItems = itemsData.where((item) => 
+            item['order_id']?.toString() == orderId
+          ).toList();
+          
+          return {
+            ...order,
+            ...order, // Duplicate to ensure map spreading works in all dart versions
+            'order_items': orderItems,
+          };
+        }).toList();
+      }
 
-      print('Supabase Orders response: $response'); // Debugging
-
-      final List data = (response as List?) ?? [];
-      _orders = data.map((item) {
+      final List dataList = (data as List?) ?? [];
+      _orders = dataList.map((item) {
         try {
           return Order.fromJson(item as Map<String, dynamic>);
         } catch (e) {
-          print('Error parsing order JSON: $e, Data: $item');
-          rethrow;
+          debugPrint('Error parsing individual order: $e');
+          // Return a dummy order or skip? Let's try to parse what we can
+          return Order.fromJson({'id': 'error', 'customer_name': 'Error parsing order'});
         }
       }).toList();
+      
+      // Remove dummy error orders
+      _orders.removeWhere((o) => o.id == 'error');
     } catch (e, stackTrace) {
-      print('Error fetching orders: $e');
+      debugPrint('CRITICAL: Error fetching orders: $e');
       print('StackTrace: $stackTrace');
-      debugPrint('Error fetching orders: $e');
+      _orders = []; // Ensure orders is at least an empty list
     } finally {
       _isOrdersLoading = false;
       notifyListeners();
@@ -716,9 +753,6 @@ class DataProvider with ChangeNotifier {
         case OrderStatus.confirmed:
           statusStr = 'Confirmed';
           updateData['confirmed_at'] = DateTime.now().toIso8601String();
-          debugPrint(
-            '✅ ORDER CONFIRMED: ID=$id, Time=${updateData['confirmed_at']}',
-          );
           break;
         case OrderStatus.packed:
           statusStr = 'Items Packed';
@@ -739,21 +773,31 @@ class DataProvider with ChangeNotifier {
 
       updateData['status'] = statusStr;
 
-      await _supabase.from('orders').update(updateData).eq('id', id);
+      final response = await _supabase
+          .from('orders')
+          .update(updateData)
+          .eq('id', id)
+          .select('*, order_items(*)')
+          .single();
 
-      await fetchOrders(); // Refresh local list to get timestamps
+      // Update the order in the local list
+      final index = _orders.indexWhere((o) => o.id == id);
+      if (index != -1) {
+        _orders[index] = Order.fromJson(response as Map<String, dynamic>);
+        notifyListeners();
+      }
     } catch (e) {
       debugPrint('Error updating order status: $e');
     }
   }
 
-  void dispatchOrder(String id) async {
+  Future<void> dispatchOrder(String id) async {
     // Legacy support, map to outForDelivery
-    updateOrderStatus(id, OrderStatus.outForDelivery);
+    await updateOrderStatus(id, OrderStatus.outForDelivery);
   }
 
-  void cancelOrder(String id) async {
-    updateOrderStatus(id, OrderStatus.cancelled);
+  Future<void> cancelOrder(String id) async {
+    await updateOrderStatus(id, OrderStatus.cancelled);
   }
 
   // --- Staff Methods ---

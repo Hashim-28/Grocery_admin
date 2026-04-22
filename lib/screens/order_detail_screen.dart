@@ -4,12 +4,24 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../core/app_theme.dart';
 
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends StatefulWidget {
   final Order order;
   const OrderDetailScreen({super.key, required this.order});
 
   @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  bool _isUpdating = false;
+
+  @override
   Widget build(BuildContext context) {
+    final currentOrder = context.watch<DataProvider>().orders.firstWhere(
+          (o) => o.id == widget.order.id,
+          orElse: () => widget.order,
+        );
+
     final currencyFormat = NumberFormat.currency(
       symbol: 'PKR ',
       decimalDigits: 0,
@@ -18,7 +30,8 @@ class OrderDetailScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Order #${order.orderNumber ?? order.id.substring(0, 8)}'),
+        title: Text(
+            'Order #${currentOrder.orderNumber ?? currentOrder.id.substring(0, 8)}'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -29,14 +42,14 @@ class OrderDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _getStatusColor(order.status).withOpacity(0.1),
+                color: _getStatusColor(currentOrder.status).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: _getStatusColor(order.status),
+                    color: _getStatusColor(currentOrder.status),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -44,19 +57,19 @@ class OrderDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'STATUS: ${_getStatusText(order.status).toUpperCase()}',
+                          'STATUS: ${_getStatusText(currentOrder.status).toUpperCase()}',
                           style: TextStyle(
-                            color: _getStatusColor(order.status),
+                            color: _getStatusColor(currentOrder.status),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Row(
                           children: [
-                            if (order.orderNumber != null)
+                            if (currentOrder.orderNumber != null)
                               Padding(
                                 padding: const EdgeInsets.only(right: 8.0),
                                 child: Text(
-                                  'Trace ID: ${order.orderNumber}',
+                                  'Trace ID: ${currentOrder.orderNumber}',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppTheme.textGrey,
@@ -64,20 +77,23 @@ class OrderDetailScreen extends StatelessWidget {
                                 ),
                               ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: order.deliveryType.toLowerCase() == 'express' 
-                                    ? Colors.amber.withOpacity(0.2) 
+                                color: currentOrder.deliveryType.toLowerCase() ==
+                                        'express'
+                                    ? Colors.amber.withOpacity(0.2)
                                     : Colors.blue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                order.deliveryType.toUpperCase(),
+                                currentOrder.deliveryType.toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: order.deliveryType.toLowerCase() == 'express' 
-                                      ? Colors.orange[800] 
+                                  color: currentOrder.deliveryType.toLowerCase() ==
+                                          'express'
+                                      ? Colors.orange[800]
                                       : Colors.blue[800],
                                 ),
                               ),
@@ -93,7 +109,7 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Action Buttons
-            _buildActionButtons(context, order),
+            _buildActionButtons(context, currentOrder),
             const SizedBox(height: 32),
 
             const Text(
@@ -107,7 +123,7 @@ class OrderDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              order.customerName,
+              currentOrder.customerName,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -121,7 +137,7 @@ class OrderDetailScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    order.address,
+                    currentOrder.address,
                     style: const TextStyle(
                       color: AppTheme.textGrey,
                       fontSize: 14,
@@ -142,11 +158,11 @@ class OrderDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ...order.items
+            ...currentOrder.items
                 .map((item) => _buildItemTile(item, currencyFormat))
                 .toList(),
 
-            if (order.paymentProofUrl != null) ...[
+            if (currentOrder.paymentProofUrl != null) ...[
               const SizedBox(height: 32),
               const Text(
                 'PAYMENT PROOF',
@@ -171,11 +187,13 @@ class OrderDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.payment_rounded, size: 16, color: AppTheme.primaryGreen),
+                        const Icon(Icons.payment_rounded,
+                            size: 16, color: AppTheme.primaryGreen),
                         const SizedBox(width: 8),
                         Text(
-                          'Payment via ${order.paymentMethod ?? "Online Bank"}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          'Payment via ${currentOrder.paymentMethod ?? "Online Bank"}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ],
                     ),
@@ -189,7 +207,8 @@ class OrderDetailScreen extends StatelessWidget {
                             child: Stack(
                               children: [
                                 InteractiveViewer(
-                                  child: Image.network(order.paymentProofUrl!),
+                                  child:
+                                      Image.network(currentOrder.paymentProofUrl!),
                                 ),
                                 Positioned(
                                   top: 10,
@@ -197,7 +216,8 @@ class OrderDetailScreen extends StatelessWidget {
                                   child: CircleAvatar(
                                     backgroundColor: Colors.black.withOpacity(0.5),
                                     child: IconButton(
-                                      icon: const Icon(Icons.close, color: Colors.white),
+                                      icon: const Icon(Icons.close,
+                                          color: Colors.white),
                                       onPressed: () => Navigator.pop(context),
                                     ),
                                   ),
@@ -210,7 +230,7 @@ class OrderDetailScreen extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
-                          order.paymentProofUrl!,
+                          currentOrder.paymentProofUrl!,
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -219,7 +239,8 @@ class OrderDetailScreen extends StatelessWidget {
                             return Container(
                               height: 200,
                               color: Colors.grey[200],
-                              child: const Center(child: CircularProgressIndicator()),
+                              child:
+                                  const Center(child: CircularProgressIndicator()),
                             );
                           },
                           errorBuilder: (context, error, stackTrace) => Container(
@@ -229,7 +250,9 @@ class OrderDetailScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.error_outline, color: Colors.red),
-                                Text('Failed to load image', style: TextStyle(color: Colors.red, fontSize: 12)),
+                                Text('Failed to load image',
+                                    style: TextStyle(
+                                        color: Colors.red, fontSize: 12)),
                               ],
                             ),
                           ),
@@ -257,7 +280,7 @@ class OrderDetailScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  currencyFormat.format(order.amount),
+                  currencyFormat.format(currentOrder.amount),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -366,9 +389,27 @@ class OrderDetailScreen extends StatelessWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => provider.updateOrderStatus(order.id, nextStatus),
-            icon: Icon(icon),
-            label: Text(nextLabel),
+            onPressed: _isUpdating
+                ? null
+                : () async {
+                    setState(() => _isUpdating = true);
+                    try {
+                      await provider.updateOrderStatus(order.id, nextStatus);
+                    } finally {
+                      if (mounted) setState(() => _isUpdating = false);
+                    }
+                  },
+            icon: _isUpdating
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(icon),
+            label: Text(_isUpdating ? 'Updating...' : nextLabel),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
@@ -381,8 +422,16 @@ class OrderDetailScreen extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         IconButton(
-          onPressed: () =>
-              provider.updateOrderStatus(order.id, OrderStatus.cancelled),
+          onPressed: _isUpdating
+              ? null
+              : () async {
+                  setState(() => _isUpdating = true);
+                  try {
+                    await provider.updateOrderStatus(order.id, OrderStatus.cancelled);
+                  } finally {
+                    if (mounted) setState(() => _isUpdating = false);
+                  }
+                },
           icon: const Icon(Icons.cancel_outlined, color: Colors.red),
           tooltip: 'Cancel Order',
         ),
@@ -399,7 +448,7 @@ class OrderDetailScreen extends StatelessWidget {
       case OrderStatus.packed:
         return 'Items Packed';
       case OrderStatus.outForDelivery:
-        return 'Out For Delivry';
+        return 'Out For Delivery';
       case OrderStatus.delivered:
         return 'Delivered';
       case OrderStatus.cancelled:
