@@ -8,6 +8,7 @@ import 'payment_accounts_screen.dart';
 import 'manage_deals_screen.dart';
 import 'profile_screen.dart';
 import 'support_center_screen.dart';
+import 'manage_categories_screen.dart';
 
 class AdminConsoleScreen extends StatelessWidget {
   const AdminConsoleScreen({super.key});
@@ -256,6 +257,18 @@ class AdminConsoleScreen extends StatelessWidget {
 
             // Store Settings Section
             const _SectionHeader(title: 'STORE SETTINGS'),
+            const SizedBox(height: 12),
+            _SettingTile(
+              icon: Icons.category_outlined,
+              label: 'Category Settings',
+              subtitle: 'Manage product categories, icons & sorting',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ManageCategoriesScreen(),
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             _SettingTile(
               icon: Icons.local_shipping_outlined,

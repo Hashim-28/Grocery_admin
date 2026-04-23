@@ -5,6 +5,7 @@ import 'dart:io';
 import '../providers/data_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'add_category_screen.dart';
+import '../models/category_model.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Product? initialProduct;
@@ -258,16 +259,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _CategoryBottomSheet(
-        data: data,
-        selectedCategory: _selectedCategory,
-        onSelected: (category) {
-          setState(() {
-            _selectedCategory = category;
-          });
-          Navigator.pop(context);
-        },
-        onAddNew: _navigateToAddCategory,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: _CategoryBottomSheet(
+          data: data,
+          selectedCategory: _selectedCategory,
+          onSelected: (category) {
+            setState(() {
+              _selectedCategory = category;
+            });
+            Navigator.pop(context);
+          },
+          onAddNew: _navigateToAddCategory,
+        ),
       ),
     );
   }
@@ -751,7 +757,7 @@ class _CategoryBottomSheet extends StatefulWidget {
 
 class _CategoryBottomSheetState extends State<_CategoryBottomSheet> {
   String _searchQuery = '';
-  late List<String> _filteredCategories;
+  late List<Category> _filteredCategories;
 
   @override
   void initState() {
@@ -763,7 +769,7 @@ class _CategoryBottomSheetState extends State<_CategoryBottomSheet> {
     setState(() {
       _searchQuery = query;
       _filteredCategories = widget.data.categories
-          .where((c) => c.toLowerCase().contains(query.toLowerCase()))
+          .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -771,7 +777,9 @@ class _CategoryBottomSheetState extends State<_CategoryBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -827,26 +835,42 @@ class _CategoryBottomSheetState extends State<_CategoryBottomSheet> {
               itemCount: _filteredCategories.length,
               itemBuilder: (context, index) {
                 final category = _filteredCategories[index];
-                final isSelected = category == widget.selectedCategory;
+                final isSelected = widget.selectedCategory == category.name;
                 return ListTile(
+                  onTap: () => widget.onSelected(category.name),
+                  leading: CircleAvatar(
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryGreen.withOpacity(0.1)
+                        : AppTheme.bgGrey,
+                    child: category.imageUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              category.imageUrl!,
+                              fit: BoxFit.cover,
+                              width: 32,
+                              height: 32,
+                            ),
+                          )
+                        : Text(
+                            category.name[0],
+                            style: TextStyle(
+                              color: isSelected
+                                  ? AppTheme.primaryGreen
+                                  : AppTheme.textGrey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                   title: Text(
-                    category,
+                    category.name,
                     style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? AppTheme.primaryGreen
-                          : AppTheme.textDark,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? AppTheme.primaryGreen : AppTheme.textDark,
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(
-                          Icons.check_circle,
-                          color: AppTheme.primaryGreen,
-                        )
+                      ? const Icon(Icons.check_circle, color: AppTheme.primaryGreen)
                       : null,
-                  onTap: () => widget.onSelected(category),
                 );
               },
             ),
@@ -891,7 +915,7 @@ class _CategoryBottomSheetState extends State<_CategoryBottomSheet> {
               ),
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+          const SizedBox(height: 12),
         ],
       ),
     );
