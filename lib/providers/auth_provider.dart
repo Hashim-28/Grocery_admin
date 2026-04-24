@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../constants/cloudinary_config.dart';
+import '../constants/supabase_config.dart';
 
 enum UserRole { admin, staff, none }
 
 class AuthProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
-  final _cloudinary = CloudinaryPublic(
-    CloudinaryConfig.cloudName,
-    CloudinaryConfig.uploadPreset,
-    cache: false,
-  );
 
   UserRole _role = UserRole.none;
   bool _isLoading = false;
@@ -174,12 +171,17 @@ class AuthProvider extends ChangeNotifier {
     try {
       String? newPhotoUrl = _photoUrl;
 
-      // 1. Upload to Cloudinary if imagePath is provided
+      // 1. Upload to Supabase Storage if imagePath is provided
       if (imagePath != null) {
-        final response = await _cloudinary.uploadFile(
-          CloudinaryFile.fromFile(imagePath, folder: 'profile_pictures'),
-        );
-        newPhotoUrl = response.secureUrl;
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${p.basename(imagePath)}';
+        final storagePath = 'profile_pictures/$fileName';
+        await _supabase.storage
+            .from(SupabaseConfig.storageBucket)
+            .upload(storagePath, File(imagePath));
+        newPhotoUrl = _supabase.storage
+            .from(SupabaseConfig.storageBucket)
+            .getPublicUrl(storagePath);
       }
 
       final user = _supabase.auth.currentUser;

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/supabase_config.dart';
-import 'auth_provider.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
-import '../constants/cloudinary_config.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import '../services/notification_service.dart';
 import '../models/payment_account_model.dart';
 import '../models/deal_model.dart';
@@ -327,11 +326,7 @@ class DailyStats {
 
 class DataProvider with ChangeNotifier {
   final _supabase = Supabase.instance.client;
-  final _cloudinary = CloudinaryPublic(
-    CloudinaryConfig.cloudName,
-    CloudinaryConfig.uploadPreset,
-    cache: false,
-  );
+
 
   RealtimeChannel? _realtimeChannel;
 
@@ -524,11 +519,15 @@ class DataProvider with ChangeNotifier {
       List<String> uploadedUrls = [];
       if (imageFilePaths != null && imageFilePaths.isNotEmpty) {
         for (String path in imageFilePaths) {
-          // Upload each to Cloudinary
-          CloudinaryResponse response = await _cloudinary.uploadFile(
-            CloudinaryFile.fromFile(path, folder: 'products'),
-          );
-          uploadedUrls.add(response.secureUrl);
+          // Upload each to Supabase Storage
+          final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(path)}';
+          final storagePath = 'products/$fileName';
+          await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+                storagePath,
+                File(path),
+              );
+          final url = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
+          uploadedUrls.add(url);
         }
       }
 
@@ -578,10 +577,14 @@ class DataProvider with ChangeNotifier {
 
       if (newImageFilePaths != null && newImageFilePaths.isNotEmpty) {
         for (String path in newImageFilePaths) {
-          CloudinaryResponse response = await _cloudinary.uploadFile(
-            CloudinaryFile.fromFile(path, folder: 'products'),
-          );
-          finalUrls.add(response.secureUrl);
+          final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(path)}';
+          final storagePath = 'products/$fileName';
+          await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+                storagePath,
+                File(path),
+              );
+          final url = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
+          finalUrls.add(url);
         }
       }
 
@@ -665,10 +668,13 @@ class DataProvider with ChangeNotifier {
     try {
       String? imageUrl;
       if (imageFilePath != null && imageFilePath.isNotEmpty) {
-        CloudinaryResponse response = await _cloudinary.uploadFile(
-          CloudinaryFile.fromFile(imageFilePath, folder: 'categories'),
-        );
-        imageUrl = response.secureUrl;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFilePath)}';
+        final storagePath = 'categories/$fileName';
+        await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+              storagePath,
+              File(imageFilePath),
+            );
+        imageUrl = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
       }
 
       final data = <String, dynamic>{'name': name};
@@ -1122,10 +1128,13 @@ class DataProvider with ChangeNotifier {
     try {
       String? imageUrl;
       if (imagePath != null && imagePath.isNotEmpty) {
-        CloudinaryResponse response = await _cloudinary.uploadFile(
-          CloudinaryFile.fromFile(imagePath, folder: 'deals'),
-        );
-        imageUrl = response.secureUrl;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(imagePath)}';
+        final storagePath = 'deals/$fileName';
+        await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+              storagePath,
+              File(imagePath),
+            );
+        imageUrl = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
       }
 
       final dealData = {
@@ -1180,10 +1189,13 @@ class DataProvider with ChangeNotifier {
     try {
       String? finalImageUrl = imageUrl;
       if (newImagePath != null && newImagePath.isNotEmpty) {
-        CloudinaryResponse response = await _cloudinary.uploadFile(
-          CloudinaryFile.fromFile(newImagePath, folder: 'deals'),
-        );
-        finalImageUrl = response.secureUrl;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(newImagePath)}';
+        final storagePath = 'deals/$fileName';
+        await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+              storagePath,
+              File(newImagePath),
+            );
+        finalImageUrl = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
       }
 
       final dealData = {
