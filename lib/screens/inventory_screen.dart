@@ -98,7 +98,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     _filterChip('All'),
                     ...data.categories.map((cat) => Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: _filterChip(cat),
+                      child: _filterChip(cat.name),
                     )).toList(),
                   ],
                 ),

@@ -9,6 +9,7 @@ import '../models/payment_account_model.dart';
 import '../models/deal_model.dart';
 import '../models/support_models.dart';
 import '../models/notification_model.dart';
+import '../models/category_model.dart';
 
 enum OrderStatus {
   placed,
@@ -421,14 +422,7 @@ class DataProvider with ChangeNotifier {
   List<Product> _products = [];
   bool _isProductsLoading = false;
 
-  List<String> _categories = [
-    'Groceries',
-    'Electronics',
-    'Apparel',
-    'Personal Care',
-    'Home Essentials',
-    'Beverages',
-  ];
+  List<Category> _categories = [];
   bool _isCategoriesLoading = false;
 
   List<Staff> _staff = [];
@@ -441,7 +435,7 @@ class DataProvider with ChangeNotifier {
   bool get isOrdersLoading => _isOrdersLoading;
   List<Product> get products => _products;
   bool get isProductsLoading => _isProductsLoading;
-  List<String> get categories => _categories;
+  List<Category> get categories => _categories;
   bool get isCategoriesLoading => _isCategoriesLoading;
   List<Staff> get staff => _staff;
   bool get isStaffLoading => _isStaffLoading;
@@ -642,18 +636,18 @@ class DataProvider with ChangeNotifier {
       debugPrint('Supabase Categories Response: $response');
       final List data = (response as List?) ?? [];
       _categories = data
-          .map((item) => (item['name'] ?? '').toString())
-          .where((name) => name.isNotEmpty)
+          .map((item) => Category.fromJson(item as Map<String, dynamic>))
           .toList();
+      
       if (_categories.isEmpty) {
-        debugPrint('No categories found in Supabase, using defaults.');
+        debugPrint('No categories found in Supabase, adding default placeholders.');
         _categories = [
-          'Groceries',
-          'Electronics',
-          'Apparel',
-          'Personal Care',
-          'Home Essentials',
-          'Beverages',
+          Category(id: '1', name: 'Groceries'),
+          Category(id: '2', name: 'Electronics'),
+          Category(id: '3', name: 'Apparel'),
+          Category(id: '4', name: 'Personal Care'),
+          Category(id: '5', name: 'Home Essentials'),
+          Category(id: '6', name: 'Beverages'),
         ];
       }
     } catch (e) {
@@ -684,6 +678,50 @@ class DataProvider with ChangeNotifier {
       await fetchCategories();
     } catch (e) {
       debugPrint('Error adding category: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateCategory(String id, String oldName, String newName, {String? imageUrl, String? newImageFilePath}) async {
+    try {
+      String? finalImageUrl = imageUrl;
+      if (newImageFilePath != null && newImageFilePath.isNotEmpty) {
+        CloudinaryResponse response = await _cloudinary.uploadFile(
+          CloudinaryFile.fromFile(newImageFilePath, folder: 'categories'),
+        );
+        finalImageUrl = response.secureUrl;
+      }
+
+      final data = <String, dynamic>{'name': newName};
+      if (finalImageUrl != null) data['image_url'] = finalImageUrl;
+
+      await _supabase.from('categories').update(data).eq('id', id);
+
+      // Update products in this category if name changed
+      if (oldName != newName) {
+        try {
+          await _supabase
+              .from('products')
+              .update({'category': newName}).eq('category', oldName);
+          await fetchProducts();
+        } catch (e) {
+          debugPrint('Error updating products category: $e');
+        }
+      }
+
+      await fetchCategories();
+    } catch (e) {
+      debugPrint('Error updating category: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteCategory(String id) async {
+    try {
+      await _supabase.from('categories').delete().eq('id', id);
+      await fetchCategories();
+    } catch (e) {
+      debugPrint('Error deleting category: $e');
       rethrow;
     }
   }
