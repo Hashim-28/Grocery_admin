@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "892085908483",
+    "project_id": "diesel-cash-carry",
+    "storage_bucket": "diesel-cash-carry.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892085908483:android:bc20eac4d9c1ba00aa4a36",
+        "android_client_info": {
+          "package_name": "com.qiblax.diesel.cash.carry"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "892085908483-osh3f1tq12d46pb9omsjd8oerebdpnc1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qiblax.diesel.cash.carry",
+            "certificate_hash": "9552d1b48a40764f28ed59da4e0c10498b650470"
+          }
+        },
+        {
+          "client_id": "892085908483-cvea138pr28v81162eorqa7127s6f33c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRvZIjEouTaZg4UF6YdTyyq6-KyasFZgE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "892085908483-cvea138pr28v81162eorqa7127s6f33c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "892085908483-cnfqvuh8d87nvpvnm1tim00rb7h810d7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.qiblax.diesel.cash.carry"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892085908483:android:9a797d7b61d72e71aa4a36",
+        "android_client_info": {
+          "package_name": "com.qiblax.dieselCash"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "892085908483-cvea138pr28v81162eorqa7127s6f33c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRvZIjEouTaZg4UF6YdTyyq6-KyasFZgE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "892085908483-cvea138pr28v81162eorqa7127s6f33c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "892085908483-cnfqvuh8d87nvpvnm1tim00rb7h810d7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.qiblax.diesel.cash.carry"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

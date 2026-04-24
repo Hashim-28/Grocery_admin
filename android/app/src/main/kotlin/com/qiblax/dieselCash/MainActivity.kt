@@ -1,4 +1,4 @@
-package com.desil.grocery_app_admin.grocery_app_admin
+package com.qiblax.dieselCash
 
 import io.flutter.embedding.android.FlutterActivity
 
