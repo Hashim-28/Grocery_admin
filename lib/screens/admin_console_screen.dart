@@ -9,6 +9,7 @@ import 'manage_deals_screen.dart';
 import 'profile_screen.dart';
 import 'support_center_screen.dart';
 import 'manage_categories_screen.dart';
+import 'broadcast_notification_screen.dart';
 
 class AdminConsoleScreen extends StatelessWidget {
   const AdminConsoleScreen({super.key});
@@ -120,7 +121,11 @@ class AdminConsoleScreen extends StatelessWidget {
                         ? NetworkImage(auth.photoUrl!)
                         : null,
                     child: auth.photoUrl == null
-                        ? const Icon(Icons.person, color: Colors.white, size: 30)
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 30,
+                          )
                         : null,
                   ),
                   const SizedBox(width: 16),
@@ -162,7 +167,10 @@ class AdminConsoleScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const ProfileScreen()),
                     ),
-                    icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryGreen),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: AppTheme.primaryGreen,
+                    ),
                   ),
                 ],
               ),
@@ -252,93 +260,105 @@ class AdminConsoleScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const ManageStaffScreen()),
                 ),
               ),
+              const SizedBox(height: 32),
+              const _SectionHeader(title: 'MARKETING & COMMUNICATION'),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.campaign_outlined,
+                label: 'Custom Notifications',
+                subtitle: 'Send broadcast messages to all users',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BroadcastNotificationScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Store Settings Section
+              const _SectionHeader(title: 'STORE SETTINGS'),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.category_outlined,
+                label: 'Category Settings',
+                subtitle: 'Manage product categories, icons & sorting',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ManageCategoriesScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.local_shipping_outlined,
+                label: 'Delivery Information',
+                subtitle: 'Charges, thresholds & delivery options',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const DeliverySettingsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.account_balance_outlined,
+                label: 'Online Payment Settings',
+                subtitle: 'Manage bank accounts for customer payments',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PaymentAccountsScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.local_offer_outlined,
+                label: 'Deals & Bundles',
+                subtitle: 'Create multi-product discounted offers',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ManageDealsScreen()),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SettingTile(
+                icon: Icons.support_agent_rounded,
+                label: 'Support / Help Center',
+                subtitle: 'Manage FAQs, contact info & about app',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SupportCenterScreen(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+
+              // Terminate Session Button
+              OutlinedButton.icon(
+                onPressed: () => context.read<AuthProvider>().logout(),
+                icon: const Icon(Icons.logout, color: AppTheme.textGrey),
+                label: const Text(
+                  'TERMINATE SESSION',
+                  style: TextStyle(
+                    color: AppTheme.textGrey,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  side: const BorderSide(color: AppTheme.borderGrey),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ],
-            const SizedBox(height: 32),
-
-            // Store Settings Section
-            const _SectionHeader(title: 'STORE SETTINGS'),
-            const SizedBox(height: 12),
-            _SettingTile(
-              icon: Icons.category_outlined,
-              label: 'Category Settings',
-              subtitle: 'Manage product categories, icons & sorting',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ManageCategoriesScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SettingTile(
-              icon: Icons.local_shipping_outlined,
-              label: 'Delivery Information',
-              subtitle: 'Charges, thresholds & delivery options',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const DeliverySettingsScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SettingTile(
-              icon: Icons.account_balance_outlined,
-              label: 'Online Payment Settings',
-              subtitle: 'Manage bank accounts for customer payments',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PaymentAccountsScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SettingTile(
-              icon: Icons.local_offer_outlined,
-              label: 'Deals & Bundles',
-              subtitle: 'Create multi-product discounted offers',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ManageDealsScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SettingTile(
-              icon: Icons.support_agent_rounded,
-              label: 'Support / Help Center',
-              subtitle: 'Manage FAQs, contact info & about app',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SupportCenterScreen(),
-                ),
-              ),
-            ),
-            const SizedBox(height: 48),
-
-            // Terminate Session Button
-            OutlinedButton.icon(
-              onPressed: () => context.read<AuthProvider>().logout(),
-              icon: const Icon(Icons.logout, color: AppTheme.textGrey),
-              label: const Text(
-                'TERMINATE SESSION',
-                style: TextStyle(
-                  color: AppTheme.textGrey,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 56),
-                side: const BorderSide(color: AppTheme.borderGrey),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
           ],
         ),
       ),

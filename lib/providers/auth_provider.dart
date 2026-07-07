@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/supabase_config.dart';
+import '../services/notification_service.dart';
 
 enum UserRole { admin, staff, none }
 
@@ -36,6 +37,10 @@ class AuthProvider extends ChangeNotifier {
           _email = session.user.email;
           _fullName = profile['full_name'];
           _photoUrl = profile['photo_url'];
+          
+          // Sync FCM token
+          NotificationService().updateToken();
+          
           notifyListeners();
         } else {
           await _supabase.auth.signOut();
@@ -93,6 +98,9 @@ class AuthProvider extends ChangeNotifier {
       _email = email;
       _fullName = name;
       _photoUrl = profile['photo_url'];
+
+      // Sync FCM token
+      NotificationService().updateToken();
     } catch (e) {
       _role = UserRole.none;
       rethrow;

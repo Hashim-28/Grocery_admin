@@ -10,6 +10,7 @@ import '../models/deal_model.dart';
 import '../models/support_models.dart';
 import '../models/notification_model.dart';
 import '../models/category_model.dart';
+import '../services/notification_api_service.dart';
 
 enum OrderStatus {
   placed,
@@ -49,6 +50,7 @@ class Order {
   final DateTime time;
   OrderStatus status;
   final String deliveryType;
+  final String? userId;
 
   // Tracking timestamps
   final DateTime? confirmedAt;
@@ -77,6 +79,7 @@ class Order {
     this.paymentMethod,
     this.paymentAccountId,
     this.paymentProofUrl,
+    this.userId,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -142,6 +145,7 @@ class Order {
       paymentMethod: json['payment_method']?.toString(),
       paymentAccountId: json['payment_account_id']?.toString(),
       paymentProofUrl: json['payment_proof_url']?.toString(),
+      userId: json['user_id']?.toString(),
     );
   }
 }
@@ -686,10 +690,13 @@ class DataProvider with ChangeNotifier {
     try {
       String? finalImageUrl = imageUrl;
       if (newImageFilePath != null && newImageFilePath.isNotEmpty) {
-        CloudinaryResponse response = await _cloudinary.uploadFile(
-          CloudinaryFile.fromFile(newImageFilePath, folder: 'categories'),
-        );
-        finalImageUrl = response.secureUrl;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(newImageFilePath)}';
+        final storagePath = 'categories/$fileName';
+        await _supabase.storage.from(SupabaseConfig.storageBucket).upload(
+              storagePath,
+              File(newImageFilePath),
+            );
+        finalImageUrl = _supabase.storage.from(SupabaseConfig.storageBucket).getPublicUrl(storagePath);
       }
 
       final data = <String, dynamic>{'name': newName};
@@ -832,8 +839,19 @@ class DataProvider with ChangeNotifier {
       // Update the order in the local list
       final index = _orders.indexWhere((o) => o.id == id);
       if (index != -1) {
-        _orders[index] = Order.fromJson(response as Map<String, dynamic>);
+        final updatedOrder = Order.fromJson(response as Map<String, dynamic>);
+        _orders[index] = updatedOrder;
         notifyListeners();
+
+        // Send Push Notification to User
+        if (updatedOrder.userId != null) {
+          NotificationApiService().sendNotification(
+            title: '🚚 Order Update: ${updatedOrder.orderNumber ?? updatedOrder.id}',
+            body: 'Your order is now: $statusStr',
+            recipientId: updatedOrder.userId!,
+            data: {'orderId': updatedOrder.id, 'status': statusStr},
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error updating order status: $e');
